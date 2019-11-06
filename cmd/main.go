@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 
 	"github.com/therealfakemoot/baas/butts"
 )
@@ -20,6 +21,8 @@ func main() {
 	}
 
 	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
 	r.Get("/fonts", func(w http.ResponseWriter, r *http.Request) {
 		for _, f := range fonts {

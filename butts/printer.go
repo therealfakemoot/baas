@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"net/http"
 	"os/exec"
 	"strings"
 	"time"
@@ -86,14 +87,19 @@ func (p Printer) Butt() error {
 		p.Butts[idx],
 	}
 
-	// "font: " + font + "\n" +
-
 	// log.Println("starting figlet")
 	figlet := exec.Command("figlet", args...)
 	figlet.Stdout = p.Writer
 	figlet.Stderr = p.Writer
 
-	p.Writer.Write([]byte("font: " + font + "\n"))
+	writer := p.Writer
+	w, ok := writer.(http.ResponseWriter)
+	if ok {
+		headers := w.Header()
+		headers.Add("X-figlet-font", font)
+	}
+
+	// p.Writer.Write([]byte("font: " + font + "\n"))
 
 	err := figlet.Start()
 	if err != nil {
