@@ -1,10 +1,41 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
+
+	"github.com/go-chi/chi"
+
+	"github.com/therealfakemoot/baas/butts"
 )
 
 func main() {
-	fmt.Println("vim-go")
+	fonts, err := butts.FigletFonts()
+
+	p := butts.Printer{
+		Butts:  []string{"butt", "butts", "booty", "fanny", "derriere"},
+		Colors: true,
+		Fonts:  fonts, // tentative option
+		Size:   0,     // tentative option
+	}
+
+	r := chi.NewRouter()
+
+	r.Get("/fonts", func(w http.ResponseWriter, r *http.Request) {
+		for _, f := range fonts {
+			w.Write([]byte(f + "\n"))
+		}
+	})
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		p.Writer = w
+		err = p.Butt()
+		if err != nil {
+			log.Printf("error generating butts: %s", err)
+		}
+	})
+
+	http.ListenAndServe(":3000", r)
+	// log.Printf("# of fonts: %d", len(fonts))
+
 }
