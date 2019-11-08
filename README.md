@@ -5,6 +5,10 @@ Butts-As-A-Service is available on [dockerhub](https://hub.docker.com/r/therealf
 
 The container may or may not have multiple configuration options, I don't know.
 
+```
+docker run -d -p 8008:8008 --name=baas therealfakemoot/baas:latest
+```
+
 # source
 
 ```
