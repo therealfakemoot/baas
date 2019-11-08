@@ -1,67 +1,16 @@
 package butts
 
 import (
-	"bufio"
 	"io"
-	"io/ioutil"
-	"log"
 	"math/rand"
-	"net/http"
 	"os/exec"
-	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
-var (
-	noise = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
-)
-
-func FigletFonts() ([]string, error) {
-	var (
-		fonts []string
-		err   error
-		buf   strings.Builder
-	)
-
-	figInfo := exec.Command("figlet", "-I2")
-	figInfo.Stdout = &buf
-
-	err = figInfo.Start()
-	if err != nil {
-		log.Printf("figInfo error: %s", err)
-		return fonts, err
-	}
-	err = figInfo.Wait()
-	if err != nil {
-		log.Printf("figInfo error: %s", err)
-		return fonts, err
-	}
-
-	r := strings.NewReader(buf.String())
-	scanner := bufio.NewScanner(r)
-
-	var fontDir string
-	for scanner.Scan() {
-		fontDir = scanner.Text()
-		break
-	}
-
-	// log.Printf("fontDir: %s", fontDir)
-	files, err := ioutil.ReadDir(fontDir)
-
-	if err != nil {
-		log.Printf("error reading fontDir: %s", err)
-	}
-
-	var split []string
-	for _, f := range files {
-		if strings.HasSuffix(f.Name(), ".flf") {
-			split = strings.Split(f.Name(), ".")
-			fonts = append(fonts, split[0])
-		}
-	}
-
-	return fonts, err
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 // Printer uses configuration values to serve butts.
@@ -70,41 +19,63 @@ type Printer struct {
 	Colors bool
 	Fonts  []string
 	Size   int
-	Writer io.Writer
 }
 
-// Butt returns an ascii butt
-func (p Printer) Butt() error {
-	idx := noise.Intn(len(p.Butts))
-	font := p.Fonts[noise.Intn(len(p.Fonts))]
+type BigButt struct {
+	Butt   string
+	Font   string
+	Output []byte
+}
 
-	args := []string{
-		"-f",
-		font,
-		"-k",
-		"-w",
-		"120",
-		p.Butts[idx],
-	}
-
-	// log.Println("starting figlet")
-	figlet := exec.Command("figlet", args...)
-	figlet.Stdout = p.Writer
-	figlet.Stderr = p.Writer
-
-	writer := p.Writer
-	w, ok := writer.(http.ResponseWriter)
-	if ok {
-		headers := w.Header()
-		headers.Add("X-figlet-font", font)
-	}
-
-	// p.Writer.Write([]byte("font: " + font + "\n"))
-
-	err := figlet.Start()
+func NewPrinter() (*Printer, error) {
+	fonts, err := FigletFonts()
 	if err != nil {
-		return err
+		return nil, errors.Wrap(err, "Failed to get figlet fonts")
 	}
 
-	return figlet.Wait()
+	return &Printer{
+		Butts:  Butts,
+		Colors: true,
+		Fonts:  fonts,
+	}, nil
+}
+
+func (p Printer) Butt() (*BigButt, error) {
+	var (
+		butt = p.Butts[rand.Intn(len(p.Butts))]
+		font = p.Fonts[rand.Intn(len(p.Fonts))]
+	)
+
+	text, err := figlet(butt, font)
+	if err != nil {
+		return nil, err
+	}
+
+	return &BigButt{
+		Butt:   butt,
+		Font:   font,
+		Output: text,
+	}, nil
+}
+
+// Butt writes an ASCII butt into the writer, returning the font
+func (p Printer) WriteButt(w io.Writer) (*BigButt, error) {
+	b, err := p.Butt()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = w.Write(b.Output)
+	return b, err
+}
+
+func figlet(text, font string) ([]byte, error) {
+	figlet := exec.Command("figlet",
+		"-f", font,
+		"-k",
+		"-w", "120",
+		text,
+	)
+
+	return figlet.Output()
 }
