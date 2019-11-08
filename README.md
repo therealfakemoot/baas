@@ -11,7 +11,7 @@ docker run -d -p 8008:8008 --name=baas therealfakemoot/baas:latest
 
 ```
 go install github.com/therealfakemoot/baas
-./baas
+./baas [address]
 ```
 
 # Usage

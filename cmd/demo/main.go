@@ -9,19 +9,19 @@ import (
 
 func main() {
 	fonts, err := butts.FigletFonts()
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	p := butts.Printer{
-		Butts:  []string{"butt", "butts", "booty", "fanny", "derriere"},
+		Butts:  butts.Butts,
 		Colors: true,
 		Fonts:  fonts, // tentative option
-		Size:   0,     // tentative option
-		Writer: os.Stdout,
 	}
 
 	// log.Printf("# of fonts: %d", len(fonts))
 
-	err = p.Butt()
-	if err != nil {
+	if _, err = p.WriteButt(os.Stderr); err != nil {
 		log.Printf("error generating butts: %s", err)
 	}
 }

@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -11,13 +13,9 @@ import (
 )
 
 func main() {
-	fonts, err := butts.FigletFonts()
-
-	p := butts.Printer{
-		Butts:  []string{"butt", "butts", "booty", "fanny", "derriere"},
-		Colors: true,
-		Fonts:  fonts, // tentative option
-		Size:   0,     // tentative option
+	p, err := butts.NewPrinter()
+	if err != nil {
+		log.Fatalln(err)
 	}
 
 	r := chi.NewRouter()
@@ -25,20 +23,28 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Get("/fonts", func(w http.ResponseWriter, r *http.Request) {
-		for _, f := range fonts {
-			w.Write([]byte(f + "\n"))
-		}
+		w.Write([]byte(strings.Join(p.Fonts, "\n")))
 	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		p.Writer = w
-		err = p.Butt()
+		b, err := p.WriteButt(w)
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			log.Printf("error generating butts: %s", err)
 		}
+
+		w.Header().Add("X-figlet-font", b.Font)
+		w.Header().Add("X-figlet-butt", b.Butt)
 	})
 
-	http.ListenAndServe(":8008", r)
-	// log.Printf("# of fonts: %d", len(fonts))
+	var addr = ":8008"
+	if len(os.Args) > 1 {
+		addr = os.Args[1]
+	}
 
+	if err := http.ListenAndServe(addr, r); err != nil {
+		log.Fatalln("Failed listening to address", addr+":", err)
+	}
+
+	// log.Printf("# of fonts: %d", len(fonts))
 }
