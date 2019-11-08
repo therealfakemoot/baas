@@ -38,7 +38,7 @@ func main() {
 		}
 	})
 
-	http.ListenAndServe(":3000", r)
+	http.ListenAndServe(":8008", r)
 	// log.Printf("# of fonts: %d", len(fonts))
 
 }
