@@ -7,6 +7,13 @@ Butts-As-A-Service is available on [dockerhub](https://hub.docker.com/r/therealf
 docker run -d -p 8008:8008 --name=baas therealfakemoot/baas:latest
 ```
 
+## nix
+
+```
+git clone https://github.com/therealfakemoot/baas && cd baas
+nix-shell
+```
+
 ## source
 
 ```
