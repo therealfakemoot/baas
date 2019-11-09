@@ -14,7 +14,7 @@ func main() {
 	fonts, err := butts.FigletFonts()
 
 	p := butts.Printer{
-		Butts:  []string{"butt", "butts", "booty", "fanny", "derriere"},
+		Butts:  []string{"butt", "butts", "booty", "derriere"},
 		Colors: true,
 		Fonts:  fonts, // tentative option
 		Size:   0,     // tentative option
